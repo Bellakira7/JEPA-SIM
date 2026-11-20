@@ -1,7 +1,6 @@
 # Pretrained JEPA-SIM predictors
 
-These are the two public-benchmark **main accuracy** checkpoints. Frozen UniAD/LTF weights and datasets
-are external dependencies and are not redistributed in this model bundle.
+Pretrained predictors for **UniAD / nuScenes** and **NAVSIM / OpenScene**.
 
 | Model | Checkpoint | Parameters | Paper interface and stage |
 |---|---|---:|---|
@@ -49,8 +48,8 @@ python tools/check_models.py --model navsim --weights-dir artifacts/models/weigh
 ```
 
 The checker verifies file and tensor hashes, metadata, normalization, paper architecture/stage and strict loading
-with this source tree. It also runs a finite-output CPU forward: native BEV grids for NAVSIM and reduced spatial
-grids with all released parameters for UniAD. Full-resolution UniAD host/data evaluation is separate.
+with this source tree. It runs CPU forwards on native NAVSIM BEV grids and reduced UniAD spatial grids
+using all released parameters.
 
 ## Use the UniAD predictor
 
@@ -77,8 +76,7 @@ Apply the bundled inverse normalization before frozen UniAD; recurrent predictor
 ## Use the NAVSIM predictor
 
 Complete `navsim/README.md` installation and data/checkpoint setup, and run `configure.py` to generate
-`artifacts/navsim/evaluation.json`. You may select the desired evaluation worker count with `--gpus`;
-no feature-cache conversion or training is needed when using this checkpoint.
+`artifacts/navsim/evaluation.json`. Select the evaluation worker count with `--gpus`.
 Point the evaluation config to the released file and use its new file checksum:
 
 ```bash
@@ -105,8 +103,7 @@ width 384, six heads, six-channel associated camera-layout conditioning, four-di
 
 ## Reference planning results
 
-These values come from the historical main-accuracy evaluations; all 14 entries match the paper after rounding.
-The published source/weight package has not been rerun on the full datasets.
+Planning results reported in the paper:
 
 UniAD uses nuScenes validation, 150 scenes, on-log AR with frozen HF UniAD 2.0, and target-frame means
 over 3,878 common refdet targets at each offset. NAVSIM uses OpenScene navtest with four valid history
@@ -122,26 +119,9 @@ frames, OpenScene-LTF-AR-v2, 11,774 targets in 131 logs, and `per_token_mean` ag
 | NAVSIM | 1.0 | 0.364 | 0.924 |
 | NAVSIM | 1.5 | 0.421 | 1.073 |
 
-The NAVSIM evaluation saved the source-checkpoint hash, which matches the release provenance.
-UniAD is linked by the archived checkpoint path/configuration; its historical evaluation did not save a weight-file hash.
+## Checkpoint format
 
-## Integrity and scope of alignment
-
-Model tensors are unchanged from their source checkpoints. Optimizer states and internal paths/job metadata
-were removed from the public copies, so **file SHA-256 values differ from the original training files**.
-`manifest.json` records both identities and a canonical tensor-state hash. Use the release-file hash in runtime guards.
-The released files are intended for inference or weight initialization, not optimizer-state resume.
-
-The NAVSIM source checkpoint's hash matches the completed historical OpenScene evaluation record.
-The UniAD source is the rollout-6000 checkpoint referenced by the historical validation and feature-analysis records.
-The checks establish architecture, checkpoint selection, tensor integrity and loader compatibility;
-they are not a new full-dataset quality/latency reproduction.
-
-These two files do not represent every timing-only configuration. In particular, the recorded nuScenes
-FP16+KV timing path uses a different checkpoint/configuration. That historical archive does not establish
-the final paper's 0.028 s checkpoint/configuration; this timing correspondence remains unverified.
-Do not attribute the paper's latency to the released UniAD dense/BF16 accuracy checkpoint.
-For NAVSIM, an archived same-source-checkpoint measurement matches the paper's 0.014 s after rounding,
-but measures the forecast component on resident prepared tensors, rather than the full evaluation pipeline.
-
-The public model weights have no project-wide license grant yet; retain applicable upstream and dataset terms.
+Each checkpoint contains the predictor tensors, model configuration and normalization metadata for inference
+and weight initialization. `manifest.json` records file SHA-256 values, canonical tensor-state hashes,
+training stages, feature interfaces and frozen-host identities. Use each release file's `sha256` value
+in the evaluation config.

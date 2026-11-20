@@ -12,8 +12,7 @@ For pretrained inference, complete installation/data setup and configuration, th
 
 Use the [FlowSim repository](https://github.com/hanfeng-wu/FlowSim) at commit
 `98f794c9055da0b55055e70e234d7785c0d2b88f`, with its NAVSIM/nuPlan environment.
-The integration imports both `navsim` and `scripts.domain_gap` from that checkout;
-installing standalone NAVSIM is insufficient. Run from this repository's root:
+The integration imports `navsim` and `scripts.domain_gap` from that checkout. Run from this repository's root:
 
 ```bash
 export REPO_ROOT="$(pwd)"
@@ -38,7 +37,6 @@ upstream dependency pins. Follow the [locked FlowSim setup guide](https://github
 and [NAVSIM installation notes](https://github.com/hanfeng-wu/FlowSim/blob/98f794c9055da0b55055e70e234d7785c0d2b88f/flowsim_navsim/docs/install.md)
 for system dependencies. Keep the upstream PyTorch, torchvision and NumPy pins together.
 This environment already supplies OpenCV; `requirements-core.txt` is intended for a separate CPU-test environment.
-A full CUDA installation has not yet been validated as a release lockfile.
 
 ## Data preparation
 
@@ -46,7 +44,7 @@ Obtain OpenScene trainval metadata, camera images and nuPlan maps, the official 
 LTF `ltf_seed_0.ckpt`, and FlowSim VH `flowsim_transfuser_VH.ckpt` from their original providers.
 Relevant dataset/model revision identifiers are recorded in `core/protocol.py`.
 The code references [official NAVSIM weights](https://huggingface.co/autonomousvision/navsim_baselines)
-and [FlowSim weights](https://huggingface.co/Hanfeng0419/FlowSim); assets are not redistributed here.
+and [FlowSim weights](https://huggingface.co/Hanfeng0419/FlowSim).
 
 Expected dataset layout:
 
@@ -59,8 +57,7 @@ dataset/
 
 Download and extract logs, sensor blobs and maps following the
 [locked upstream data instructions](https://github.com/hanfeng-wu/FlowSim/blob/98f794c9055da0b55055e70e234d7785c0d2b88f/flowsim_navsim/docs/install.md).
-The training recipe needs trainval data, not just the mini subset. LTF reads `CAM_L0`, `CAM_F0` and `CAM_R0`;
-all required history frames must be present. The public camera-only workflow does not require LiDAR input.
+Use trainval data with camera images from `CAM_L0`, `CAM_F0` and `CAM_R0` for all four history frames.
 Set the dataset and checkpoint locations:
 
 ```bash
@@ -73,8 +70,7 @@ export FLOWSIM_CKPT=/path/to/flowsim_transfuser_VH.ckpt
 export SCENE_FILTERS="$FLOWSIM_ROOT/navsim/planning/script/config/common/train_test_split/scene_filter"
 ```
 
-Use `navtrain.yaml` and `navtest.yaml` from that scene-filter directory. Both use four initial history frames;
-the similarly named `navtest_rollout_eval.yaml` uses a different history length and is not the config-generator input.
+Use `navtrain.yaml` and `navtest.yaml` from that scene-filter directory; both use four initial history frames.
 `configure.py` freezes the selected tokens and rejects overlapping train/test logs.
 Dataset availability and filter choice determine the actual sample coverage; inspect the generated token and sequence audits.
 
@@ -106,19 +102,18 @@ torchrun --standalone --nproc_per_node=8 navsim/train_sequence.py \
   --config artifacts/navsim/sequence.json --out artifacts/navsim/sequence
 ```
 
-Camera-stage caches are an intermediate for replaying the frozen fusion blocks into real-image BEV targets;
-this preparation does not train a camera-feature predictor. The BEV cache reuses the checked symbolic conditions
-and computes its own training-frame normalization. `training_stages: ["tf"]` applies to both indexing and training,
-so the default pipeline does not require rollout clips or train a rollout checkpoint.
+Camera-stage caches feed the frozen fusion blocks to produce real-image BEV targets. The BEV cache reuses
+the symbolic conditions and computes training-frame normalization. `training_stages: ["tf"]` selects five-frame
+windows and TF predictor training.
 
 The paper uses eight GPUs with one clip per GPU, 96,031 five-frame windows, 45,495 TF updates,
 peak LR `3e-4`, 1,896 warm-up updates, cosine decay to 1% of the peak, weight decay `.04`,
 gradient clipping at 1 and FP32 training. The existing exposure formula determines the update count from
-the actual selected windows and global batch. Changing the data selection or GPU count changes that budget;
-such runs require an explicitly adjusted evaluation step guard and should be labeled as adapted settings.
+the selected windows and global batch. For a custom run, set the expected checkpoint step in the evaluation
+config to the completed update count.
 
-The cache completion markers, training-only normalization, source hashes, deterministic sampler state,
-and resume checks remain active. Separate runs should use separate output directories.
+Each run records cache completion markers, training normalization, source hashes and deterministic sampler state.
+Use a separate output directory for each run.
 
 ## Inference
 
@@ -176,8 +171,7 @@ python navsim/core/eval_sequence.py merge --config artifacts/navsim/evaluation.j
 ```
 
 The generated evaluation config selects `sequence/tf/featsim_ltf.pt` and checks the final-BEV interface,
-TF stage, update 45,495 and absence of flow heads before evaluation. Autoregressive inference is a property
-of the evaluation/history update; it does not require rollout-trained weights.
+TF stage, update 45,495 and residual output head. Evaluation advances predictor history autoregressively.
 
 The `plan` phase fixes the common target list and writes per-worker requests. Launch the same worker count
 as configured in `world_size`; the `merge` phase rejects incomplete or inconsistent shards.
@@ -188,11 +182,11 @@ and `per_log_macro`; the paper's planning comparison uses the target-averaged `p
 Use `timed_eval_sequence.py` with the same phases in a separate output directory for latency instrumentation.
 The reference-image, copy-last, predicted-feature and FlowSim arms share a checked token set.
 The evaluator distinguishes agreement with frozen LTF outputs from error against logged human trajectories.
-This is an open-loop feature evaluation; it does not compute PDM/EPDMS.
+This workflow reports open-loop planning consistency.
 
 Optional reconstruction adapters in `core/gs_vendor/` target SplatAD, OmniRe without SMPL, and Street Gaussians.
 They require separately installed upstream projects, weights and reconstruction configs.
 `run_reconstruction.py` and `preflight_reconstruction.py` accept an optional `nuplan_devkit_root` config key;
-otherwise the installed SDK is used. `configs/mini_smoke.yaml` is only a small interface check.
+otherwise the installed SDK is used. `configs/mini_smoke.yaml` runs a small interface check.
 
-Full OpenScene training/evaluation and renderer identity checks require Linux/CUDA and the external assets.
+Run OpenScene training, evaluation and renderer identity checks in the Linux/CUDA environment described above.

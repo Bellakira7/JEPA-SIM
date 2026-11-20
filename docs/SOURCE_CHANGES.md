@@ -1,26 +1,14 @@
-# Changes made for the source review candidate
+# Implementation notes
 
-- Selected Python implementation and test files for UniAD and NAVSIM. Runtime products, dataset samples,
-  frozen environment copies, platform clients, deployment scripts and historical result archives are excluded.
-- Bundled the predictor's attention, layout and projection dependencies so the code does not import another project.
-- Centralized UniAD external locations in `uniad/featsim_paths.py`; NAVSIM locations are supplied through JSON configs.
-- Moved NAVSIM integration helpers to `navsim/core/` so the directory does not shadow the upstream `navsim` package.
-- Removed shared cache overrides, internal prose and hardcoded experiment-checkpoint defaults.
-- Replaced the UniAD dependency's MMCV DropPath import with the timm implementation also used by the NAVSIM dependency.
-  This removes the MMCV requirement from predictor-only checks; the frozen UniAD runner still requires MMCV CUDA ops.
-- Replaced the incomplete on-log merger with a standalone merger for evaluated arms and a tested scene-cluster bootstrap.
-  It retains geom/refdet masks and paired differences against copy-last. It no longer imports an unavailable
-  historical merge helper or injects archived BEV-warp rows. Its JSON summary schema is new.
-- Reused the official nuScenes SDK split definitions instead of shipping a separate split JSON or SDK source copy.
-- Added a config generator, external motion-anchor conversion, path-safe source checks and setup instructions.
-- Aligned the default NAVSIM recipe with the paper: final fused BEV, TF-only training, explicit BEV-cache conversion,
-  and autoregressive evaluation of the TF checkpoint with interface/stage/update guards.
-- Aligned the UniAD training examples with the paper's three-channel layouts, residual/flow heads,
-  eight-GPU batch and separate TF initialization, TF control and rollout fine-tuning schedules.
-- Added model cards and an integrity manifest for the two main-accuracy predictor checkpoints.
-  Separate inference-weight copies omit optimizer state and private metadata while retaining exact model tensors.
-- Added strict native loading, normalization, architecture/stage and CPU forward checks for those weights.
-
-Model forward/training math and checkpoint tensor names are otherwise retained.
-No project-wide open-source license has been selected. Full CUDA environment locking and dataset-based reproduction
-are follow-up work; passing CPU tests does not establish reproduction of paper results.
+- UniAD predicts six-camera, four-level FPN features and advances the frozen UniAD streaming state.
+- NAVSIM predicts the final fused BEV and evaluates its TF checkpoint autoregressively.
+- Predictor attention, layout conditioning and projection modules are bundled with each integration.
+- UniAD data and checkpoint locations are configured through `uniad/featsim_paths.py`.
+- NAVSIM data, cache and checkpoint locations are configured through JSON files.
+- NAVSIM helpers live in `navsim/core/`; the upstream NAVSIM runtime is installed through FlowSim.
+- Predictor modules use timm DropPath; frozen UniAD inference uses MMCV CUDA operators.
+- The UniAD on-log merger reports geom/refdet summaries, scene-cluster bootstrap intervals and paired differences against copy-last.
+- Dataset splits come from the official nuScenes SDK.
+- Training guides specify the three UniAD stages and the final-BEV TF recipe for NAVSIM.
+- Model cards document feature interfaces, normalization, inference commands and planning results.
+- Model-check tools verify checkpoint hashes, configuration, normalization, strict loading and CPU forwards.

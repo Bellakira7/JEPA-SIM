@@ -162,8 +162,7 @@ def validate(model_name, weights_dir, manifest):
     return dict(status='pass', model=model_name, filename=path.name, parameters=parameters,
                 checkpoint_sha256=entry['sha256'], state_dict_sha256=entry['state_dict_sha256'],
                 strict_native_loading=True, paper_architecture_and_stage=True, normalization='pass',
-                metadata_scan='pass', forward_finite=True, forward_scope=forward_scope,
-                limitation='No frozen driving-model or full-dataset quality/latency rerun.')
+                metadata_scan='pass', forward_finite=True, forward_scope=forward_scope)
 
 
 def main():

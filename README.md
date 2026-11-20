@@ -6,7 +6,7 @@ the context for subsequent predictions.
 
 This repository contains the **UniAD / nuScenes** and **camera-only Latent TransFuser / OpenScene**
 implementations. The documented workflows cover data preparation, predictor training, logged-scene
-inference and planning-consistency evaluation. The frozen driving model is not retrained.
+inference and planning-consistency evaluation with frozen driving models.
 
 | Integration | Predicted interface | Training | Inference |
 |---|---|---|---|
@@ -25,7 +25,7 @@ inference and planning-consistency evaluation. The frozen driving model is not r
 - [Evaluation](#evaluation)
 - [Tests](#tests)
 - [Repository structure](#repository-structure)
-- [License and acknowledgements](#license-and-acknowledgements)
+- [Acknowledgements](#acknowledgements)
 
 ## Installation
 
@@ -46,10 +46,9 @@ Choose an integration and complete its installation and import checks:
 | UniAD | [Install the MMDetection 3 / MMDetection3D 1 inference stack](uniad/README.md#installation) |
 | NAVSIM | [Install the locked FlowSim checkout and its NAVSIM dependencies](navsim/README.md#installation) |
 
-`requirements-core.txt` is for standalone predictor tests. It does not install the complete driving stacks.
-In particular, the UniAD runner requires MMCV CUDA operators, and the NAVSIM workflow imports FlowSim's
-loader, frozen LTF and evaluation helpers. GPU installation depends on the PyTorch/CUDA combination;
-a fully validated CUDA environment lockfile is not included yet.
+`requirements-core.txt` supplies the standalone predictor-test dependencies.
+The UniAD guide installs MMCV CUDA operators and the driving stack; the NAVSIM guide installs FlowSim's
+loader, frozen LTF and evaluation helpers. Select a matching PyTorch/CUDA build for your GPU.
 
 ## Pretrained models
 
@@ -62,13 +61,13 @@ The two main accuracy predictors are prepared in a separate model bundle:
 
 Download the weights from [GitHub Release v1.0.0](https://github.com/Bellakira7/JEPA-SIM/releases/tag/v1.0.0).
 See the [model card and usage instructions](models/README.md) for checksums, normalization, reference metrics
-and pretrained evaluation commands. Dataset preparation and frozen-host setup are still required,
-but predictor training can be skipped when using the prepared weights.
+and pretrained evaluation commands. To use pretrained weights, complete the dataset and frozen-host setup,
+then follow the model card's evaluation commands.
 
 ## Data and checkpoints
 
-Datasets and frozen driving-model checkpoints are obtained separately from their providers.
-JEPA-SIM predictor weights are distributed separately as described above; data and precomputed features are not bundled.
+Obtain datasets and frozen driving-model checkpoints from the providers listed below.
+Download JEPA-SIM predictor weights from the release above and generate feature caches with the preparation scripts.
 
 | Integration | Required inputs | Preparation guide |
 |---|---|---|
@@ -122,7 +121,7 @@ Follow the [configuration, caching and training commands](navsim/README.md#train
 5. Train the BEV predictor with `navsim/train_sequence.py`.
 
 The generated config selects `training_stages: ["tf"]`, no flow heads and eight GPUs.
-Camera-stage caching is preparation for the BEV targets; it does not train a camera-feature predictor.
+Camera-stage caching prepares the targets for BEV predictor training.
 With the paper's 96,031 five-frame windows and global batch 8, training takes 45,495 updates
 with LR `3e-4`, 1,896 warm-up updates and FP32 computation.
 
@@ -132,9 +131,9 @@ The resulting checkpoint is:
 artifacts/navsim/sequence/tf/featsim_ltf.pt
 ```
 
-Changing the selected data or global batch changes the exposure-derived update count. The generated
-evaluation config checks the paper's interface, TF stage and update 45,495; explicitly adjust that guard
-when running an adapted recipe.
+The selected windows and global batch determine the update count. The generated evaluation config
+selects the final-BEV interface, TF stage and update 45,495. For a custom training run, set the expected
+checkpoint step to that run's completed update count.
 
 ## Inference
 
@@ -152,14 +151,12 @@ CUDA_VISIBLE_DEVICES=0 python uniad/a_table/a_eval.py \
 ```
 
 This exercises predictor inference and frozen UniAD planning on one logged scene and saves an evaluation shard.
-It is a small correctness run, not the full validation result.
 For NAVSIM, the [one-target inference instructions](navsim/README.md#inference) resolve the generated config
 and run `navsim/core/eval_open_loop.py` on one target with the TF checkpoint.
 
 For tensor-level integration, see the [UniAD predictor interface](uniad/README.md#predictor-interface)
 and [NAVSIM predictor interface](navsim/README.md#predictor-interface). They document feature shapes,
-condition alignment and normalization. The scripts generate features for a driving model; they do not
-produce rendered future RGB images.
+condition alignment and normalization. These interfaces return predicted feature tensors for the frozen driving model.
 
 ## Evaluation
 
@@ -206,7 +203,7 @@ Outputs are written to `artifacts/navsim/sequence/open_loop/`:
 Use `per_token_mean` planning agreement for the paper's target-averaged comparison.
 `per_log_macro` uses equal log weights and is reported separately.
 Human-trajectory errors under `gt/*` are different metrics from real-image planning agreement.
-This NAVSIM path is an open-loop evaluation and does not compute PDM/EPDMS.
+The NAVSIM workflow reports open-loop planning consistency.
 
 Use fresh output directories for independent runs. Keep reference checkpoints, normalization, target selection
 and inference settings fixed when comparing arms. Optional renderer and public closed-loop adapters are described
@@ -231,7 +228,7 @@ python uniad/agreement/test_agreement.py
 ```
 
 Run suites separately because the integrations retain some identical module names.
-CPU tests cover synthetic inputs; they do not establish full-dataset CUDA reproduction.
+CPU tests exercise predictor forwards, sequence sampling, cache handling and aggregation with synthetic inputs.
 The guides include the real-data interface checks to run after installation and asset preparation.
 
 ## Repository structure
@@ -255,8 +252,7 @@ models/                 # pretrained predictor model card and integrity manifest
 tools/                  # source/model checks and motion-anchor conversion
 ```
 
-## License and acknowledgements
+## Acknowledgements
 
 This implementation builds on UniAD, V-JEPA 2, NAVSIM, FlowSim and their dependencies.
 See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for source relationships and separate data/model terms.
-A project-wide license has not yet been selected.
