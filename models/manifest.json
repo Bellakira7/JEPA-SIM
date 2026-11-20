@@ -1,0 +1,59 @@
+{
+  "format_version": 1,
+  "title": "JEPA-SIM public-benchmark predictor weights",
+  "release_status": "GitHub Release v1.0.0",
+  "weights_include_optimizer": false,
+  "models": {
+    "uniad": {
+      "filename": "jepasim_uniad_rollout_6000.pt",
+      "bytes": 143816779,
+      "sha256": "b8fefcf6f9c4e1dc48e9300fbd3adfff1b784b688c3b416b439efb68c9636bfc",
+      "state_dict_sha256": "2108a66db1e0d70cb908e0a4c407a7d0f761a36df8c96ced97f716f7f9ecc7e6",
+      "source_checkpoint_sha256": "cd48c32a32fc62c6c9456ebf7d37ce2060f880981ea63a73959d1631bcaeef81",
+      "teacher_sha256": "4dcdc34c09f964e377f608dbb764f003844a9ccc62b4a0469f94375302ed76d0",
+      "parameters": 35938784,
+      "download_url": "https://github.com/Bellakira7/JEPA-SIM/releases/download/v1.0.0/jepasim_uniad_rollout_6000.pt",
+      "interface": "six-camera four-level FPN before BEVFormer",
+      "stage": "rollout",
+      "step": 6000,
+      "context_frames": 4,
+      "step_seconds": 0.5,
+      "layout_channels": 3,
+      "inference": {
+        "precision": "bf16 autocast",
+        "kv_cache": false
+      },
+      "normalization": {
+        "filename": "uniad_level_stats_1x_hf.pt",
+        "sha256": "97d4fe4cca8911aa21598fe13d41eff5c51fef177c8e59d52dba62417b72e08c",
+        "bytes": 11341,
+        "download_url": "https://github.com/Bellakira7/JEPA-SIM/releases/download/v1.0.0/uniad_level_stats_1x_hf.pt"
+      }
+    },
+    "navsim": {
+      "filename": "jepasim_navsim_bev_tf_45495.pt",
+      "bytes": 77757875,
+      "sha256": "00f1cfecf7ca5b3754b23a065a02e4cc0d5ae199dd25bf1ad2c937f629bbb7f0",
+      "state_dict_sha256": "84320a768bae843a3709341804fb14f7ab0028dcd9bdd76c82bde9b8f31e8fd6",
+      "source_checkpoint_sha256": "5be3325de1907a1035b078ff723a8f0d48f6d668c6897ac3f414769869a19bb8",
+      "teacher_sha256": "d08e97ba6beb937412697d619171553041622859e026a06935a2e0e118e6309d",
+      "parameters": 19426560,
+      "download_url": "https://github.com/Bellakira7/JEPA-SIM/releases/download/v1.0.0/jepasim_navsim_bev_tf_45495.pt",
+      "interface": "final fused LTF BEV [B,512,8,8]",
+      "stage": "tf",
+      "step": 45495,
+      "context_frames": 4,
+      "step_seconds": 0.5,
+      "layout_channels": 6,
+      "inference": {
+        "precision": "float32",
+        "mode": "sliding_ar"
+      },
+      "normalization": "embedded mean/std"
+    }
+  },
+  "validation_scope": "Paper architecture, checkpoint stage, tensor integrity and CPU loading/forward; not a new dataset quality or latency evaluation.",
+  "repository_url": "https://github.com/Bellakira7/JEPA-SIM",
+  "release_url": "https://github.com/Bellakira7/JEPA-SIM/releases/tag/v1.0.0",
+  "bundle_download_url": "https://github.com/Bellakira7/JEPA-SIM/releases/download/v1.0.0/jepasim-models-v1.0.0.zip"
+}

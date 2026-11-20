@@ -1,0 +1,8 @@
+# Model-only CPU checks. Install torch/torchvision for your compute environment first.
+numpy
+timm
+pytest
+opencv-python-headless
+scipy
+shapely
+pyquaternion
