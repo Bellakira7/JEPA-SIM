@@ -91,7 +91,7 @@ def main():
     write_json(args.out/'data_audit.json', dict(status='ready_for_camera_smoke',
                dataset='OpenScene-v1.1 mini / available nuPlan blob shard 0',
                openscene_revision=OPENSCENE_REVISION, logs=logs,
-               note='This subset is not the full NAVSIM navtest benchmark. LTF uses no LiDAR.'))
+               note='OpenScene mini split with camera-only LTF.'))
     print(f'done: {len(logs)} logs -> {args.out}', flush=True)
 
 

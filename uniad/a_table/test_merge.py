@@ -1,4 +1,4 @@
-"""The review candidate's standalone merger consumes complete, disjoint shards."""
+"""The standalone merger consumes complete, disjoint shards."""
 import json
 import pickle
 import subprocess
