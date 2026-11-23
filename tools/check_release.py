@@ -27,6 +27,13 @@ def inspect(root):
             continue
         data = path.read_bytes()
         inventory.append(dict(path=relative, bytes=len(data), sha256=hashlib.sha256(data).hexdigest()))
+        # Paper figures are the only binary documentation assets in the release.
+        if path.suffix == '.png' and path.relative_to(root).parts[:2] == ('docs', 'assets'):
+            if (len(data) < 33 or not data.startswith(b'\x89PNG\r\n\x1a\n') or
+                    data[12:16] != b'IHDR' or
+                    not int.from_bytes(data[16:20], 'big') or not int.from_bytes(data[20:24], 'big')):
+                findings.append(dict(path=relative, check='invalid_documentation_png'))
+            continue
         if path.suffix not in allowed and path.name not in special:
             findings.append(dict(path=relative, check='unexpected_file_type'))
             continue
