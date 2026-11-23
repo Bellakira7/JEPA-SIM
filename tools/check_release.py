@@ -12,6 +12,11 @@ def inspect(root):
     ignored = {'__pycache__', '.pytest_cache', '.git', '.venv', 'venv', 'data', 'artifacts',
                'checkpoints', 'outputs', 'runs', 'third_party'}
     special = {'.gitignore', '.gitattributes'}
+    # The data guide generates these ignored assets beside the frozen runner.
+    generated_anchors = {
+        'uniad/uniad_port/uniad_port/assets/motion_anchors_mode6_v1.0.1.npz',
+        'uniad/uniad_port/uniad_port/assets/motion_anchors_mode6_v2.0.npz',
+    }
     # Reject workspace storage prefixes, internal services and credential literals.
     patterns = {
         'private_storage': re.compile(r'/cpfs\d*/|[A-Z]:[\\/](?:Users|workspace)[\\/]', re.I),
@@ -23,6 +28,8 @@ def inspect(root):
         if not path.is_file():
             continue
         relative = path.relative_to(root).as_posix()
+        if relative in generated_anchors:
+            continue
         if any(part in ignored for part in path.relative_to(root).parts[:-1]):
             continue
         data = path.read_bytes()
