@@ -1,6 +1,7 @@
 {
   "date": "2026-11-23",
   "source_snapshot": "fc2669481b687ada0a9231f867fcc7235759b013",
+  "runtime_code_base": "1035269bccec4395a0a0753d39b3b77a9579a84e",
   "scope": "Prepared DSW PPU runtime; public planning-consistency smoke checks, not full paper reproduction",
   "environment": {
     "python": "3.12.3",
