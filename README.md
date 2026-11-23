@@ -82,7 +82,7 @@ execution. Geometric layout projection still runs: “render-free” removes RGB
 | UniAD / nuScenes | Six-camera, four-level FPN before BEVFormer | TF initialization, then rollout fine-tuning | Autoregressive features with streaming UniAD state |
 | NAVSIM / OpenScene | Final fused LTF BEV, `[B,512,8,8]` | Teacher forcing only | Autoregressive use of the TF checkpoint |
 
-**More:** [Third-party notices](THIRD_PARTY_NOTICES.md) · [Implementation notes](docs/SOURCE_CHANGES.md)
+**More:** [Third-party notices](THIRD_PARTY_NOTICES.md) · [Implementation notes](docs/SOURCE_CHANGES.md) · [Recorded DSW verification](docs/README_REPRODUCTION.md)
 
 ## Contents
 
