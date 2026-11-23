@@ -3,9 +3,7 @@
 The public inference pipelines produced finite real-data planning-consistency results in a
 prepared Linux/PPU environment. This checks that the commands, released predictors and frozen
 hosts work together; it does **not** reproduce the full paper tables or timings.
-The evaluated local documentation snapshot was `fc2669481b687ada0a9231f867fcc7235759b013`;
-predictor, frozen-host and evaluation Python sources match the public upstream base
-`1035269bccec4395a0a0753d39b3b77a9579a84e` and are unchanged by this PR.
+The evaluated source snapshot was `fc2669481b687ada0a9231f867fcc7235759b013`.
 See the [machine-readable readout](README_REPRODUCTION_20261123.json) for all smoke planning rows,
 test counts, model hashes, identity checks and aggregation labels.
 
