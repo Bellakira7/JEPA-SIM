@@ -78,7 +78,7 @@ mkdir -p "$UNIAD_BENCH/feat"
 
 `featsim_paths.py` defines all data/checkpoint defaults. `NUSCENES_TABLES` and `NUSCENES_MAP_ROOT`
 can override metadata and map roots; both default to the standard nuScenes directory layout.
-`JEPA_DEPS_DIR` selects an alternative to the bundled `jepa_deps/`.
+Predictor dependencies are bundled in `jepa_deps/`; `featsim_paths.py` resolves that source directory.
 
 The two UniAD checkpoint families have different numerical conventions; `uniad_port/uniad_port/compat.py`
 records them and the runner selects the family from checkpoint metadata. The paper commands below use `--ckpt hf`.
@@ -153,17 +153,20 @@ The final rollout horizon uses 12-frame clips (`ctx + F`), with stop-gradient be
 
 ## Inference
 
-After training, run one logged scene and one anchor on a single GPU:
+After training, evaluate all legal anchors in one logged scene on a single GPU:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python uniad/a_table/a_eval.py \
-  --ckpt hf --scenes 0 --max-anchors 1 --ctx 4 \
+  --ckpt hf --scenes 0 --ctx 4 \
   --pred "featsim=$UNIAD_BENCH/train_ro/iter_6000.pt" \
   --out "$UNIAD_BENCH/inference_smoke"
+python uniad/a_table/a_merge.py "$UNIAD_BENCH/inference_smoke"
 ```
 
 The script initializes real feature history and UniAD memory at each anchor, generates the following observations,
-and feeds them through the frozen planner. It writes `shard0of1.pkl` with metric records and run metadata.
+and feeds them through the frozen planner. It writes `shard0of1.pkl` with metric records and run metadata;
+the merger writes `summary.json` and `summary.md`. Add `--max-anchors 1` only for a faster startup check:
+the first anchor may contribute solely to the 4.0 s offset and cannot establish all-offset common-target results.
 Use a new output directory for each run.
 
 ### Predictor interface
