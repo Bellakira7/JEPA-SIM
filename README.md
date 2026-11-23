@@ -15,11 +15,11 @@ encoding, while the driving model stays frozen.
   fine-tuning on predicted histories, with real-image targets and stop-gradient between prediction calls.
 - **Improve planning agreement at lower observation cost.** The paper reports 0.165 m Plan ADE on
   nuScenes at a 0.5 s observation offset, with 28 ms observation generation; the corresponding SplatAD
-  row reports 0.310 m and 280 ms. These are paper results, not a timing guarantee for a new machine.
+  row reports 0.310 m and 280 ms.
 
 The OpenScene adaptation uses a different interface and training recipe: it predicts Latent
 TransFuser's **final fused BEV**, and evaluates a **teacher-forced checkpoint autoregressively**.
-Predictors are trained separately for each frozen host; they are not interchangeable across encoders.
+Each frozen host has its own trained predictor.
 
 ## Method at a glance
 
@@ -35,14 +35,14 @@ while the OpenScene adaptation pools layout conditions to its BEV grid.
 
 *Figure S2 from the paper.* UniAD receives predicted FPNs **before fusion**; OpenScene receives
 predicted BEV **after fusion**. Fixed training-channel normalization is inverted before public-host
-injection, while predictor history keeps standardized features. Frozen weights do not freeze UniAD's
-streaming memory. The in-house integration shown in panel (a) is not included in this public release.
+injection, while predictor history keeps standardized features. UniAD continues updating its streaming
+memory at each generated step.
 
 ## Main paper results
 
 Plan ADE/FDE compare plans produced from generated observations with **real-image plans from the same
-frozen driving model**. Observation offset is the duration of generated observations, not the planner's
-waypoint horizon. Lower is better.
+frozen driving model**. Observation offset measures the duration of generated observations;
+the waypoint horizon specifies the length of the planned trajectory. Lower is better.
 
 | Public benchmark / protocol | Observation offset | JEPA-SIM Plan ADE / FDE | Observation generation |
 |---|---:|---:|---:|
@@ -52,22 +52,22 @@ waypoint horizon. Lower is better.
 | Same OpenScene protocol | 1.5 s | **0.421 / 1.073 m** | Same observation model |
 
 Source: paper Tables 1–2 and Appendix A.3; [all released-model reference offsets](models/README.md#reference-planning-results).
-Latency covers observation generation and any image encoding, excluding downstream planning/control.
+Observation latency covers rendering or feature prediction and image encoding.
 The displayed timings imply about **10×** versus SplatAD on nuScenes (280 vs 28 ms), and **18×** versus
-OmniRe on OpenScene (248 vs 14 ms); these name the comparator rather than combining baselines.
+OmniRe on OpenScene (248 vs 14 ms).
 
 On the paper's **60-scene in-house ego-closed-loop benchmark**, JEPA-SIM achieves the lowest error on
 six of seven execution-consistency metrics: trajectory ADE/FDE are **0.848 / 2.545 m**, versus
 **0.964 / 2.945 m** for plain 3DGS, with about **8×** faster observation generation
 (45 vs 361 ms; Table 3). Surrounding traffic follows logged tracks. This study uses recorded execution
-of the same frozen driving model as reference; the proprietary host, data and checkpoint are not released.
+of the same frozen driving model as reference.
 
 ## Start here
 
 This release contains **UniAD / nuScenes** and **camera-only Latent TransFuser / OpenScene** source,
 pretrained predictors and evaluation helpers. The public main-table workflows use **logged ego motion
-and layouts** to test autoregressive planning consistency; use them separately from ego-closed-loop
-execution. Geometric layout projection still runs: “render-free” removes RGB scene rendering.
+and layouts** to evaluate autoregressive planning consistency. Projected camera-space layouts condition
+feature prediction throughout the rollout.
 
 1. **Check the source without datasets:** follow [Tests](#tests) in a separate CPU-test environment.
 2. **Use pretrained models:** [download and verify the release](models/README.md#prepare-the-model-bundle),
@@ -99,8 +99,8 @@ execution. Geometric layout projection still runs: “render-free” removes RGB
 ## Installation
 
 Use **Linux, Bash, Python 3.10+ and a compatible accelerator runtime** for the benchmark workflows.
-The installation recipes target NVIDIA CUDA. A device reporting `torch.cuda.is_available()` alone
-does not verify MMCV operators or the full frozen-host stack; run the integration's import and real-data checks.
+The installation recipes target NVIDIA CUDA. Complete the integration's import and real-data checks
+for your accelerator runtime.
 The paper training recipes use eight GPUs with one clip per GPU. Logged-scene inference can run on one GPU.
 Create separate environments for UniAD and NAVSIM because their upstream dependency stacks differ.
 
@@ -223,8 +223,8 @@ CUDA_VISIBLE_DEVICES=0 python uniad/a_table/a_eval.py \
 
 This evaluates all legal anchors in one logged scene and saves an evaluation shard; merge it with
 `python uniad/a_table/a_merge.py "$UNIAD_BENCH/inference_smoke"` to inspect non-empty common-target summaries.
-For a faster startup check, add `--max-anchors 1`; the first anchor may yield only the 4.0 s offset,
-so that run is not an all-offset planning comparison.
+Add `--max-anchors 1` for a faster startup check. The complete-scene run supplies common-target
+summaries at every offset.
 For NAVSIM, the [one-target inference instructions](navsim/README.md#inference) resolve the generated config
 and run `navsim/core/eval_open_loop.py` on one target with the TF checkpoint.
 
