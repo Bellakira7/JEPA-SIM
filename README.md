@@ -216,12 +216,15 @@ For a small UniAD run:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python uniad/a_table/a_eval.py \
-  --ckpt hf --scenes 0 --max-anchors 1 --ctx 4 \
+  --ckpt hf --scenes 0 --ctx 4 \
   --pred "featsim=$UNIAD_BENCH/train_ro/iter_6000.pt" \
   --out "$UNIAD_BENCH/inference_smoke"
 ```
 
-This exercises predictor inference and frozen UniAD planning on one logged scene and saves an evaluation shard.
+This evaluates all legal anchors in one logged scene and saves an evaluation shard; merge it with
+`python uniad/a_table/a_merge.py "$UNIAD_BENCH/inference_smoke"` to inspect non-empty common-target summaries.
+For a faster startup check, add `--max-anchors 1`; the first anchor may yield only the 4.0 s offset,
+so that run is not an all-offset planning comparison.
 For NAVSIM, the [one-target inference instructions](navsim/README.md#inference) resolve the generated config
 and run `navsim/core/eval_open_loop.py` on one target with the TF checkpoint.
 
