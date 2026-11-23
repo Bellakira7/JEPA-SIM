@@ -165,8 +165,8 @@ python uniad/a_table/a_merge.py "$UNIAD_BENCH/inference_smoke"
 
 The script initializes real feature history and UniAD memory at each anchor, generates the following observations,
 and feeds them through the frozen planner. It writes `shard0of1.pkl` with metric records and run metadata;
-the merger writes `summary.json` and `summary.md`. Add `--max-anchors 1` only for a faster startup check:
-the first anchor may contribute solely to the 4.0 s offset and cannot establish all-offset common-target results.
+the merger writes `summary.json` and `summary.md`. Add `--max-anchors 1` for a faster startup check.
+The complete-scene run supplies common-target summaries at every offset.
 Use a new output directory for each run.
 
 ### Predictor interface
