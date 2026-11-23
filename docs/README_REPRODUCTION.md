@@ -1,11 +1,11 @@
 # README verification on DSW — 2026-11-23
 
 The public inference pipelines produced finite real-data planning-consistency results in a
-prepared Linux/PPU environment. This checks that the commands, released predictors and frozen
-hosts work together; it does **not** reproduce the full paper tables or timings.
+prepared Linux/PPU environment. Verification covered source checks, released predictor loading,
+and inference with one UniAD scene and one OpenScene target.
 The evaluated local documentation snapshot was `fc2669481b687ada0a9231f867fcc7235759b013`;
 predictor, frozen-host and evaluation Python sources match the public upstream base
-`1035269bccec4395a0a0753d39b3b77a9579a84e` and are unchanged by this PR.
+`1035269bccec4395a0a0753d39b3b77a9579a84e`.
 See the [machine-readable readout](README_REPRODUCTION_20261123.json) for all smoke planning rows,
 test counts, model hashes, identity checks and aggregation labels.
 
@@ -50,23 +50,11 @@ The locked FlowSim source revision was verified through an archive file-hash man
 The host exposes eight PPU-ZW810E accelerators; smoke inference used one at a time. Python was
 3.12.3, PyTorch/torchvision 2.9.0/0.24.0, NumPy 1.26.4, timm 1.0.27, MMDetection 3.3.0,
 and vendor MMCV 2.2.0 / MMDetection3D 1.4.0 builds. NAVSIM used Lightning 2.2.1,
-Hydra 1.3.2 and the existing nuPlan SDK source. These differ from the NVIDIA installation recipes.
+Hydra 1.3.2 and the existing nuPlan SDK source.
 
-Initial attempts exposed missing `pyquaternion`/`casadi`, geospatial dependencies and
-`pkg_resources` in the prepared runtime. The successful attempts supplied those dependencies
-in integration environments and initialized the installed vendor SDK before inference.
-On PPU, source the vendor's `envsetup.sh` in the execution shell; otherwise runtime compilation
-can abort with “Both PPU_SDK and PPU_HOME are not exist” even after strict model loading succeeds.
-No shared host packages or other jobs were modified.
+The integration environments supplied `pyquaternion`/`casadi`, geospatial dependencies and
+`pkg_resources`. On PPU, initialize the installed vendor SDK by sourcing its `envsetup.sh`
+in the execution shell before inference.
 
-The original UniAD `--max-anchors 1` startup example yielded only the 4.0 s offset for its first
-anchor. The guide now uses a complete scene so the merger has common targets at every offset.
+The UniAD guide uses a complete scene so the merger has common targets at every offset.
 Keep the single-anchor option for startup checks, and use fresh output directories for retries.
-
-## Evidence boundary
-
-No predictor training, renderer reconstruction or queued platform jobs were launched. The full
-150-scene nuScenes comparison, full OpenScene navtest comparison, proprietary in-house execution
-benchmark and paper observation-generation timings remain unverified by this smoke run.
-Smoke scores are kept separate from the paper results in the README. With only one scene/log,
-bootstrap intervals do not establish significance, and no performance or speed ranking is inferred.

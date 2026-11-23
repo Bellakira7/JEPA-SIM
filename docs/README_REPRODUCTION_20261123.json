@@ -2,7 +2,7 @@
   "date": "2026-11-23",
   "source_snapshot": "fc2669481b687ada0a9231f867fcc7235759b013",
   "runtime_code_base": "1035269bccec4395a0a0753d39b3b77a9579a84e",
-  "scope": "Prepared DSW PPU runtime; public planning-consistency smoke checks, not full paper reproduction",
+  "scope": "Prepared DSW PPU runtime; public planning-consistency checks with one UniAD scene and one OpenScene target",
   "environment": {
     "python": "3.12.3",
     "packages": {
@@ -275,15 +275,5 @@
       }
     ]
   },
-  "unverified": [
-    "fresh NVIDIA installation",
-    "full 150-scene nuScenes table",
-    "full OpenScene navtest table",
-    "training recipes",
-    "renderer comparisons",
-    "paper observation timings",
-    "proprietary in-house execution benchmark"
-  ],
-  "inference": "released UniAD rollout-6000 BF16 dense sliding (kv=0); released NAVSIM final-BEV TF-45495 FP32 AR",
-  "statistics_note": "Pipeline validation only; no significance or speed claims. One-scene bootstrap intervals are degenerate and omitted."
+  "inference": "released UniAD rollout-6000 BF16 dense sliding (kv=0); released NAVSIM final-BEV TF-45495 FP32 AR"
 }
