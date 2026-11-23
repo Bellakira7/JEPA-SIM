@@ -1,0 +1,289 @@
+{
+  "date": "2026-11-23",
+  "source_snapshot": "fc2669481b687ada0a9231f867fcc7235759b013",
+  "runtime_code_base": "1035269bccec4395a0a0753d39b3b77a9579a84e",
+  "scope": "Prepared DSW PPU runtime; public planning-consistency smoke checks, not full paper reproduction",
+  "environment": {
+    "python": "3.12.3",
+    "packages": {
+      "torch": "2.9.0",
+      "torchvision": "0.24.0",
+      "numpy": "1.26.4",
+      "mmcv": "2.2.0+v0.1.0.ppu2.1.0.ce",
+      "mmdet": "3.3.0",
+      "mmdet3d": "1.4.0+v0.1.0.ppu2.1.0.ce",
+      "timm": "1.0.27",
+      "nuscenes-devkit": "1.2.0"
+    },
+    "device": "PPU-ZW810E",
+    "device_count": 8,
+    "frozen_hosts": {
+      "uniad": {
+        "sha256": "4dcdc34c09f964e377f608dbb764f003844a9ccc62b4a0469f94375302ed76d0",
+        "matches_release_teacher": true
+      },
+      "navsim": {
+        "sha256": "d08e97ba6beb937412697d619171553041622859e026a06935a2e0e118e6309d",
+        "matches_release_teacher": true
+      }
+    }
+  },
+  "source_check": "pass after documentation PNG support",
+  "tests": [
+    {
+      "suite": "protocol",
+      "passed": 4,
+      "returncode": 0
+    },
+    {
+      "suite": "sequence",
+      "passed": 7,
+      "returncode": 0
+    },
+    {
+      "suite": "paper_recipes",
+      "passed": 11,
+      "returncode": 0
+    },
+    {
+      "suite": "parallel_helpers",
+      "passed": 11,
+      "returncode": 0
+    },
+    {
+      "suite": "model_checks",
+      "passed": 3,
+      "returncode": 0
+    },
+    {
+      "suite": "uniad_predictor",
+      "passed": 3,
+      "returncode": 0
+    },
+    {
+      "suite": "aggregation",
+      "passed": 5,
+      "returncode": 0
+    },
+    {
+      "suite": "agreement",
+      "passed": 23,
+      "returncode": 0
+    }
+  ],
+  "passed_tests": 67,
+  "released_predictors": {
+    "uniad": "pass",
+    "navsim": "pass"
+  },
+  "uniad": {
+    "dataset": "nuScenes validation / scene-0003",
+    "protocol": "UniAD on-log AR / refdet",
+    "aggregation": "target-frame mean",
+    "reference": "same frozen HF UniAD 2.0 real-image plan",
+    "num_scenes": 1,
+    "anchors": 33,
+    "common_targets_per_offset": 26,
+    "source": "summary.json / summary.refdet",
+    "identity_plan_ade_max_m": 0,
+    "table": [
+      {
+        "arm": "identity",
+        "offset_seconds": 0.5,
+        "plan_ade_m": 0.0,
+        "plan_fde_m": 0.0,
+        "finite_targets": 26
+      },
+      {
+        "arm": "identity",
+        "offset_seconds": 1.5,
+        "plan_ade_m": 0.0,
+        "plan_fde_m": 0.0,
+        "finite_targets": 26
+      },
+      {
+        "arm": "identity",
+        "offset_seconds": 2.5,
+        "plan_ade_m": 0.0,
+        "plan_fde_m": 0.0,
+        "finite_targets": 26
+      },
+      {
+        "arm": "identity",
+        "offset_seconds": 4.0,
+        "plan_ade_m": 0.0,
+        "plan_fde_m": 0.0,
+        "finite_targets": 26
+      },
+      {
+        "arm": "copy_last",
+        "offset_seconds": 0.5,
+        "plan_ade_m": 0.19928426961772716,
+        "plan_fde_m": 0.4555180767694345,
+        "finite_targets": 26
+      },
+      {
+        "arm": "copy_last",
+        "offset_seconds": 1.5,
+        "plan_ade_m": 0.33057709869283897,
+        "plan_fde_m": 0.7613570801913738,
+        "finite_targets": 26
+      },
+      {
+        "arm": "copy_last",
+        "offset_seconds": 2.5,
+        "plan_ade_m": 0.349407353080236,
+        "plan_fde_m": 0.7880901551017394,
+        "finite_targets": 26
+      },
+      {
+        "arm": "copy_last",
+        "offset_seconds": 4.0,
+        "plan_ade_m": 0.46011544147936195,
+        "plan_fde_m": 0.8952328238922816,
+        "finite_targets": 26
+      },
+      {
+        "arm": "pred:jepasim",
+        "offset_seconds": 0.5,
+        "plan_ade_m": 0.19357257737563208,
+        "plan_fde_m": 0.4440641775727272,
+        "finite_targets": 26
+      },
+      {
+        "arm": "pred:jepasim",
+        "offset_seconds": 1.5,
+        "plan_ade_m": 0.3291989967513543,
+        "plan_fde_m": 0.7864590083750395,
+        "finite_targets": 26
+      },
+      {
+        "arm": "pred:jepasim",
+        "offset_seconds": 2.5,
+        "plan_ade_m": 0.38265329499084216,
+        "plan_fde_m": 0.9241652611929637,
+        "finite_targets": 26
+      },
+      {
+        "arm": "pred:jepasim",
+        "offset_seconds": 4.0,
+        "plan_ade_m": 0.48210266261146617,
+        "plan_fde_m": 1.1511889644540274,
+        "finite_targets": 26
+      }
+    ]
+  },
+  "navsim": {
+    "dataset": "OpenScene mini / official navtest filter / one selected camera-complete target",
+    "protocol": "OpenScene-LTF-AR-v2",
+    "aggregation": "per_token_mean",
+    "reference": "same frozen camera-only LTF seed-0 real-image plan",
+    "num_tokens": 1,
+    "num_logs": 1,
+    "source": "stats.json / table / per_token_mean",
+    "identity_tolerance": 1e-06,
+    "identity_max_absolute_error": {
+      "trajectory": 0.0,
+      "agent_states": 0.0,
+      "agent_labels": 0.0,
+      "bev_semantic_map": 0.0
+    },
+    "table": [
+      {
+        "arm": "identity",
+        "offset_seconds": 0.5,
+        "plan_ade_m": 0.0,
+        "plan_fde_m": 0.0,
+        "finite_targets": 1
+      },
+      {
+        "arm": "identity",
+        "offset_seconds": 1.0,
+        "plan_ade_m": 0.0,
+        "plan_fde_m": 0.0,
+        "finite_targets": 1
+      },
+      {
+        "arm": "identity",
+        "offset_seconds": 1.5,
+        "plan_ade_m": 0.0,
+        "plan_fde_m": 0.0,
+        "finite_targets": 1
+      },
+      {
+        "arm": "copy_last_bev",
+        "offset_seconds": 0.5,
+        "plan_ade_m": 0.25932347774505615,
+        "plan_fde_m": 0.6980111598968506,
+        "finite_targets": 1
+      },
+      {
+        "arm": "copy_last_bev",
+        "offset_seconds": 1.0,
+        "plan_ade_m": 0.324672132730484,
+        "plan_fde_m": 0.8646655082702637,
+        "finite_targets": 1
+      },
+      {
+        "arm": "copy_last_bev",
+        "offset_seconds": 1.5,
+        "plan_ade_m": 0.7496208548545837,
+        "plan_fde_m": 2.1901214122772217,
+        "finite_targets": 1
+      },
+      {
+        "arm": "featsim_ltf",
+        "offset_seconds": 0.5,
+        "plan_ade_m": 0.15975426137447357,
+        "plan_fde_m": 0.49192142486572266,
+        "finite_targets": 1
+      },
+      {
+        "arm": "featsim_ltf",
+        "offset_seconds": 1.0,
+        "plan_ade_m": 0.10609777271747589,
+        "plan_fde_m": 0.3162451982498169,
+        "finite_targets": 1
+      },
+      {
+        "arm": "featsim_ltf",
+        "offset_seconds": 1.5,
+        "plan_ade_m": 0.9020845890045166,
+        "plan_fde_m": 2.8204288482666016,
+        "finite_targets": 1
+      },
+      {
+        "arm": "flowsim_vh",
+        "offset_seconds": 0.5,
+        "plan_ade_m": 0.20057913661003113,
+        "plan_fde_m": 0.5448135733604431,
+        "finite_targets": 1
+      },
+      {
+        "arm": "flowsim_vh",
+        "offset_seconds": 1.0,
+        "plan_ade_m": 0.19670036435127258,
+        "plan_fde_m": 0.4390341639518738,
+        "finite_targets": 1
+      },
+      {
+        "arm": "flowsim_vh",
+        "offset_seconds": 1.5,
+        "plan_ade_m": 0.2662998139858246,
+        "plan_fde_m": 0.736177921295166,
+        "finite_targets": 1
+      }
+    ]
+  },
+  "unverified": [
+    "fresh NVIDIA installation",
+    "full 150-scene nuScenes table",
+    "full OpenScene navtest table",
+    "training recipes",
+    "renderer comparisons",
+    "paper observation timings",
+    "proprietary in-house execution benchmark"
+  ],
+  "inference": "released UniAD rollout-6000 BF16 dense sliding (kv=0); released NAVSIM final-BEV TF-45495 FP32 AR",
+  "statistics_note": "Pipeline validation only; no significance or speed claims. One-scene bootstrap intervals are degenerate and omitted."
+}
