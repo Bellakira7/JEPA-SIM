@@ -31,7 +31,7 @@
   motion.addEventListener('change',()=>{if(motion.matches){autoStart=false;pause();}});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
   new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;if(!inView)pause();else if(autoStart&&ready)start();},{threshold:.08}).observe($('.drive-theater'));
-  function render(){slider.value=time;slider.style.setProperty('--progress',time/6*100+'%');slider.setAttribute('aria-valuetext',time.toFixed(1)+' seconds');$('#time-output').innerHTML=time.toFixed(1)+' <span>/ 6.0 s</span>';$('#drive-frame').textContent=String(Math.min(31,Math.floor(time*5)+1)).padStart(2,'0')+' / 31';for(const arm of ['gs','jepa']){$('#velocity-'+arm).textContent=(sample(arm,time).speed*3.6).toFixed(0);}}
+  function render(){document.dispatchEvent(new CustomEvent("jepa-replay-frame",{detail:{current,time}}));slider.value=time;slider.style.setProperty('--progress',time/6*100+'%');slider.setAttribute('aria-valuetext',time.toFixed(1)+' seconds');$('#time-output').innerHTML=time.toFixed(1)+' <span>/ 6.0 s</span>';$('#drive-frame').textContent=String(Math.min(31,Math.floor(time*5)+1)).padStart(2,'0')+' / 31';for(const arm of ['gs','jepa']){$('#velocity-'+arm).textContent=(sample(arm,time).speed*3.6).toFixed(0);}}
   function tick(now){
     if(running){
       // A shared media clock stops the world view while a replay stream is buffering.
