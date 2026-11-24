@@ -12,6 +12,11 @@ def inspect(root):
     ignored = {'__pycache__', '.pytest_cache', '.git', '.venv', 'venv', 'data', 'artifacts',
                'checkpoints', 'outputs', 'runs', 'third_party'}
     special = {'.gitignore', '.gitattributes'}
+    # The data guide generates these ignored assets beside the frozen runner.
+    generated_anchors = {
+        'uniad/uniad_port/uniad_port/assets/motion_anchors_mode6_v1.0.1.npz',
+        'uniad/uniad_port/uniad_port/assets/motion_anchors_mode6_v2.0.npz',
+    }
     # Reject workspace storage prefixes, internal services and credential literals.
     patterns = {
         'private_storage': re.compile(r'/cpfs\d*/|[A-Z]:[\\/](?:Users|workspace)[\\/]', re.I),
@@ -23,10 +28,19 @@ def inspect(root):
         if not path.is_file():
             continue
         relative = path.relative_to(root).as_posix()
+        if relative in generated_anchors:
+            continue
         if any(part in ignored for part in path.relative_to(root).parts[:-1]):
             continue
         data = path.read_bytes()
         inventory.append(dict(path=relative, bytes=len(data), sha256=hashlib.sha256(data).hexdigest()))
+        # Paper figures are the only binary documentation assets in the release.
+        if path.suffix == '.png' and path.relative_to(root).parts[:2] == ('docs', 'assets'):
+            if (len(data) < 33 or not data.startswith(b'\x89PNG\r\n\x1a\n') or
+                    data[12:16] != b'IHDR' or
+                    not int.from_bytes(data[16:20], 'big') or not int.from_bytes(data[20:24], 'big')):
+                findings.append(dict(path=relative, check='invalid_documentation_png'))
+            continue
         if path.suffix not in allowed and path.name not in special:
             findings.append(dict(path=relative, check='unexpected_file_type'))
             continue

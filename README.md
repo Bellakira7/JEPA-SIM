@@ -1,19 +1,88 @@
 # JEPA-SIM: Render-Free Closed-Loop Driving Simulation
 
-JEPA-SIM predicts the visual features consumed by a frozen driving model, conditioned on ego motion
-and camera-space scene layouts. Generated features replace image-encoder observations and become
-the context for subsequent predictions.
+**Simulate what a driving model sees directly in feature space.** JEPA-SIM predicts the next
+observation from feature history, executed ego motion and projected agent/map layouts. After real-image
+initialization, predictions become the next history: rollout steps bypass RGB scene rendering and image
+encoding, while the driving model stays frozen.
 
-This repository contains the **UniAD / nuScenes** and **camera-only Latent TransFuser / OpenScene**
-implementations. The documented workflows cover data preparation, predictor training, logged-scene
-inference and planning-consistency evaluation with frozen driving models.
+**[Pretrained models](models/README.md) · [UniAD quick start](uniad/README.md) · [NAVSIM quick start](navsim/README.md) · [Release v1.0.0](https://github.com/Bellakira7/JEPA-SIM/releases/tag/v1.0.0)**
+
+## Why JEPA-SIM?
+
+- **Predict at the driving model's observation interface.** On nuScenes, six-camera FPN features enter
+  before BEVFormer, leaving UniAD's spatial fusion, temporal memory, perception and planning in the loop.
+- **Train for repeated prediction.** UniAD uses teacher-forced initialization followed by rollout
+  fine-tuning on predicted histories, with real-image targets and stop-gradient between prediction calls.
+- **Improve planning agreement at lower observation cost.** The paper reports 0.165 m Plan ADE on
+  nuScenes at a 0.5 s observation offset, with 28 ms observation generation; the corresponding SplatAD
+  row reports 0.310 m and 280 ms.
+
+The OpenScene adaptation uses a different interface and training recipe: it predicts Latent
+TransFuser's **final fused BEV**, and evaluates a **teacher-forced checkpoint autoregressively**.
+Each frozen host has its own trained predictor.
+
+## Method at a glance
+
+![JEPA-SIM observation-action loop, camera-space conditioning and predictor training, reproduced from paper Figure 2](docs/assets/method-figure2.png)
+
+*Figure 2 from the accompanying paper.* Real images initialize history; predicted observations drive
+the frozen policy, executed motion updates ego pose, and the new pose determines the next layout.
+Real-image features supervise every prediction, including rollout steps. The diagram illustrates the
+camera-feature method; the released UniAD layout adapter uses pixel-unshuffle and convolutions,
+while the OpenScene adaptation pools layout conditions to its BEV grid.
+
+![Frozen-host injection points for the in-house base, UniAD FPN adaptation and OpenScene final-BEV adaptation, reproduced from paper Figure S2](docs/assets/interfaces-figure-s2.png)
+
+*Figure S2 from the paper.* UniAD receives predicted FPNs **before fusion**; OpenScene receives
+predicted BEV **after fusion**. Fixed training-channel normalization is inverted before public-host
+injection, while predictor history keeps standardized features. UniAD continues updating its streaming
+memory at each generated step.
+
+## Main paper results
+
+Plan ADE/FDE compare plans produced from generated observations with **real-image plans from the same
+frozen driving model**. Observation offset measures the duration of generated observations;
+the waypoint horizon specifies the length of the planned trajectory. Lower is better.
+
+| Public benchmark / protocol | Observation offset | JEPA-SIM Plan ADE / FDE | Observation generation |
+|---|---:|---:|---:|
+| nuScenes validation / UniAD on-log AR, 3,878 common refdet targets per offset in 150 scenes | 0.5 s | **0.165 / 0.340 m** | **28 ms/step** |
+| Same nuScenes protocol | 4.0 s | **0.454 / 0.977 m** | Same observation model |
+| OpenScene navtest / OpenScene-LTF-AR-v2, 11,774 targets in 131 camera-complete logs, `per_token_mean` | 0.5 s | **0.293 / 0.743 m** | **14 ms/step** |
+| Same OpenScene protocol | 1.5 s | **0.421 / 1.073 m** | Same observation model |
+
+Source: paper Tables 1–2 and Appendix A.3; [all released-model reference offsets](models/README.md#reference-planning-results).
+Observation latency covers rendering or feature prediction and image encoding.
+The displayed timings imply about **10×** versus SplatAD on nuScenes (280 vs 28 ms), and **18×** versus
+OmniRe on OpenScene (248 vs 14 ms).
+
+On the paper's **60-scene in-house ego-closed-loop benchmark**, JEPA-SIM achieves the lowest error on
+six of seven execution-consistency metrics: trajectory ADE/FDE are **0.848 / 2.545 m**, versus
+**0.964 / 2.945 m** for plain 3DGS, with about **8×** faster observation generation
+(45 vs 361 ms; Table 3). Surrounding traffic follows logged tracks. This study uses recorded execution
+of the same frozen driving model as reference.
+
+## Start here
+
+This release contains **UniAD / nuScenes** and **camera-only Latent TransFuser / OpenScene** source,
+pretrained predictors and evaluation helpers. The public main-table workflows use **logged ego motion
+and layouts** to evaluate autoregressive planning consistency. Projected camera-space layouts condition
+feature prediction throughout the rollout.
+
+1. **Check the source without datasets:** follow [Tests](#tests) in a separate CPU-test environment.
+2. **Use pretrained models:** [download and verify the release](models/README.md#prepare-the-model-bundle),
+   install one integration and prepare its datasets/frozen host, then run its one-target smoke evaluation.
+   Predictor training and feature-statistics estimation can be skipped for released weights.
+3. **Reproduce the public planning results:** use the [pretrained evaluation commands](models/README.md),
+   the full stated test set, matching frozen checkpoint and normalization, and the documented aggregation.
+4. **Train a predictor:** follow the complete integration guide; UniAD and NAVSIM use separate environments.
 
 | Integration | Predicted interface | Training | Inference |
 |---|---|---|---|
 | UniAD / nuScenes | Six-camera, four-level FPN before BEVFormer | TF initialization, then rollout fine-tuning | Autoregressive features with streaming UniAD state |
 | NAVSIM / OpenScene | Final fused LTF BEV, `[B,512,8,8]` | Teacher forcing only | Autoregressive use of the TF checkpoint |
 
-**Guides:** [UniAD](uniad/README.md) · [NAVSIM](navsim/README.md) · [Pretrained models](models/README.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+**More:** [Third-party notices](THIRD_PARTY_NOTICES.md) · [Implementation notes](docs/SOURCE_CHANGES.md) · [Recorded DSW verification](docs/README_REPRODUCTION.md)
 
 ## Contents
 
@@ -29,7 +98,9 @@ inference and planning-consistency evaluation with frozen driving models.
 
 ## Installation
 
-Use **Linux, Bash, Python 3.10+ and a CUDA-capable GPU** for the benchmark workflows.
+Use **Linux, Bash, Python 3.10+ and a compatible accelerator runtime** for the benchmark workflows.
+The installation recipes target NVIDIA CUDA. Complete the integration's import and real-data checks
+for your accelerator runtime.
 The paper training recipes use eight GPUs with one clip per GPU. Logged-scene inference can run on one GPU.
 Create separate environments for UniAD and NAVSIM because their upstream dependency stacks differ.
 
@@ -145,12 +216,15 @@ For a small UniAD run:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python uniad/a_table/a_eval.py \
-  --ckpt hf --scenes 0 --max-anchors 1 --ctx 4 \
+  --ckpt hf --scenes 0 --ctx 4 \
   --pred "featsim=$UNIAD_BENCH/train_ro/iter_6000.pt" \
   --out "$UNIAD_BENCH/inference_smoke"
 ```
 
-This exercises predictor inference and frozen UniAD planning on one logged scene and saves an evaluation shard.
+This evaluates all legal anchors in one logged scene and saves an evaluation shard; merge it with
+`python uniad/a_table/a_merge.py "$UNIAD_BENCH/inference_smoke"` to inspect non-empty common-target summaries.
+Add `--max-anchors 1` for a faster startup check. The complete-scene run supplies common-target
+summaries at every offset.
 For NAVSIM, the [one-target inference instructions](navsim/README.md#inference) resolve the generated config
 and run `navsim/core/eval_open_loop.py` on one target with the TF checkpoint.
 
