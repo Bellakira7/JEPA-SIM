@@ -1,7 +1,6 @@
 (() => {
   "use strict";
   const $ = (selector) => document.querySelector(selector);
-  const data = window.JEPA_DATA;
   // Reveal content once as it enters the viewport, with a small group stagger.
   const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
   const revealGroups = [
@@ -45,9 +44,9 @@
   const heroProcess = $(".hero-process");
   const processButtons = Array.from($(".process-steps").querySelectorAll("button"));
   const processStages = [
-    { name: "observe", start: 0, seek: 0, title: "Observe the scene", description: "Pure camera input, before prediction." },
+    { name: "observe", start: 0, seek: 0, title: "Initialize from real images", description: "Real features warm up the history." },
     { name: "predict", start: 2.5, seek: 3.15, title: "Predict in feature space", description: "Feature PCA with scene boxes and the rollout path." },
-    { name: "execute", start: 5.5, seek: 6.15, title: "Execute the action", description: "Follow the path, then observe again." }
+    { name: "execute", start: 5.5, seek: 6.15, title: "Execute the action", description: "Execute, then predict the next observation." }
   ];
   function syncHeroPlayback() {
     heroPlayback.textContent = heroVideo.paused ? "Play video" : "Pause video";
@@ -158,14 +157,16 @@
   syncSectionNav();
 
   const dialog = $("#figure-dialog");
-  $(".figure-button").addEventListener("click", (event) => {
+  document.querySelectorAll(".figure-button").forEach((figureButton) => figureButton.addEventListener("click", (event) => {
     const button = event.currentTarget;
     $("#expanded-figure").src = button.dataset.image;
     $("#expanded-figure").alt = button.dataset.caption;
     $("#figure-caption").textContent = button.dataset.caption;
+    $(".dialog-header > span").textContent = button.dataset.title || "Model architecture";
+    $("#figure-original").href = button.dataset.image;
     dialog.showModal();
     document.body.style.overflow = "hidden";
-  });
+  }));
   $("#close-figure").addEventListener("click", () => dialog.close());
   dialog.addEventListener("close", () => { document.body.style.overflow = ""; });
   dialog.addEventListener("click", (event) => {
@@ -174,46 +175,4 @@
     if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close();
   });
 
-  function updateResults() {
-    const i = Number($("#offset").value);
-    const rows = data.results.rows;
-    $("#result-rows").replaceChildren();
-    $("#ade-chart").replaceChildren();
-    rows.forEach((row) => {
-      const ours = row.name === "JEPA-SIM";
-      const tr = document.createElement("tr");
-      if (ours) tr.className = "ours";
-      const th = document.createElement("th");
-      th.scope = "row";
-      th.textContent = row.name;
-      tr.append(th);
-      [row.ade[i], row.fde[i], row.latency].forEach((value) => {
-        const td = document.createElement("td");
-        td.textContent = value === null ? "—" : value.toFixed(3);
-        tr.append(td);
-      });
-      $("#result-rows").append(tr);
-      const bar = document.createElement("div");
-      bar.className = "bar-row" + (ours ? " ours" : "");
-      const label = document.createElement("span");
-      label.className = "bar-name";
-      label.textContent = row.name;
-      const track = document.createElement("div");
-      track.className = "bar-track";
-      track.setAttribute("aria-hidden", "true");
-      const fill = document.createElement("div");
-      fill.className = "bar-fill";
-      fill.style.width = (row.ade[i] / 3.2 * 100) + "%";
-      track.append(fill);
-      const value = document.createElement("span");
-      value.className = "bar-value";
-      value.textContent = row.ade[i].toFixed(3);
-      bar.append(label, track, value);
-      $("#ade-chart").append(bar);
-    });
-    $("table caption").textContent = "Planning consistency at " + data.results.offsets[i].toFixed(1) + " seconds observation offset, and total observation latency";
-    $("#ade-chart").setAttribute("aria-label", "Plan ADE in meters at " + data.results.offsets[i].toFixed(1) + " seconds; lower is better");
-  }
-  $("#offset").addEventListener("change", updateResults);
-  updateResults();
 })();
